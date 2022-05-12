@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="bootstrap.min.css" />
+    <title>Weather Today</title>
+  </head>
+  <body>
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6 mx-auto text-center bg-primary mt-5 p-5 rounded">
+          <h1 id="w-location"></h1>
+          <h3 class="text-dark" id="w-desc"></h3>
+          <h3 id="w-string"></h3>
+          <img id="w-icon" />
+          <ul class="list-group mt-3">
+            <li class="list-group-item" id="w-humidity"></li>
+            <li class="list-group-item" id="w-dewpoint"></li>
+            <li class="list-group-item" id="w-feels-like"></li>
+            <li class="list-group-item" id="w-wind"></li>
+            <li class="list-group-item" id="w-details"></li>
+          </ul>
+          <hr />
+          <button
+            class="btn btn-info"
+            type="button"
+            data-toggle="modal"
+            data-target="#locModal"
+          >
+            Change Location
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div
+      class="modal fade"
+      id="locModal"
+      tabindex="-1"
+      role="dialog"
+      aria-labelledby="locModalLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="locModalLabel">Choose Location</h5>
+            <button
+              type="button"
+              class="close"
+              data-dismiss="modal"
+              aria-label="Close"
+            >
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form id="w-form">
+              <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" class="form-control" />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-dismiss="modal"
+            >
+              Close
+            </button>
+            <button id="w-change-btn" type="button" class="btn btn-primary">
+              Save changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script
+      src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js"
+      integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+      integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.min.js"
+      integrity="sha384-VHvPCCyXqtD5DqJeNxl2dtTyhF78xXNXdkwX1CZeRusQfRKp+tA7hAShOK/B/fQ2"
+      crossorigin="anonymous"
+    ></script>
+
+    <script src="storage.js"></script>
+    <script src="weather.js"></script>
+    <script src="ui.js"></script>
+    <script src="app.js"></script>
+    <script>
+      $(document).ready(function () {
+        $("#w-change-btn").click(function () {
+          $("#locModal").modal("hide");
+        });
+      });
+    </script>
+  </body>
+</html>
+
+<!-- So a lot of you in this course and Brad's other courses are getting emails from GItHub about changes to how we make requests to their API along the lines of..
+
+"Please use Basic Authentication instead as using OAuth credentials in query parameters has been deprecated and will be removed July 1st, 2020.
+
+Depending on your API usage, we'll be sending you this email reminder at most once every 3 days."
+
+
+So the first thing to do is get yourself a token by following these instructions.
+
+
+
+Now this next part is critically important, when it comes to choosing the permissions scopes do not select any permissions
+
+If you were to select certain permissions and then share your code, like in a GitHub repository or host your app anywhere, the token would be available to anyone inspecting the code. Depending on what permissions you set when you generated the token you could potentially leave your GitHub account vulnerable. So DO NOT SET ANY PERMISSIONS and MAKE SURE YOU HAVE NO PERMISSIONS ON THE TOKEN IF YOU SHARE YOUR CODE
+
+GitHub does actually have your back in if you (or someone else) actually pushes a valid token to your repository, you'll get a notification and GitHub will revoke the token.
+
+We don't need any permissions on our token for this app as all we are doing is increasing the rate limits to the API.
+
+
+
+Once you have your token change the code in github.js to...
+
+
+
+       class GitHub {
+          constructor() {
+            this.config = {
+              headers: {
+                Authorization: 'token YOUR_TOKEN_HERE'
+              }
+            }
+            this.repos_count = 5
+            this.repos_sort = 'created: asc'
+          }
+          async getUser(user) {
+            const profileResponse = await fetch(
+              `https://api.github.com/users/${user}`,
+              this.config
+            )
+         
+            const repoResponse = await fetch(
+              `https://api.github.com/users/${user}/repos?per_page=${this.repos_count}&sort=${this.repos_sort}`,
+              this.config
+            )
+         
+            const profile = await profileResponse.json()
+         
+            const repos = await repoResponse.json()
+         
+            return {
+              profile,
+              repos
+            }
+          }
+        }
+Hope that helps some of you.
+
+Editted to add an alternative if you want to make some improvements in performance.
+We can concurrently fetch both the profile and repos, without awaiting for each Promise to resolve using Promise.all
+If you don't want to break the app if we don't find a matching user, then cache the last 'good' response user. So if the user is not found we show the last user that was found.
+
+class GitHub {
+  constructor() {
+    this.config = {
+      headers: {
+        Authorization: 'token YOUR_SECRET_TOKEN-HERE',
+      },
+    }
+    this.repos_count = 5
+    this.repos_sort = 'created: asc'
+  }
+  async getUser(user) {
+    // cache the user so if we get a bad response we show the last 'good' user
+    let cachedUser = {}
+ 
+    const profileResponse = fetch(
+      `https://api.github.com/users/${user}`,
+      this.config
+    )
+ 
+    const repoResponse = fetch(
+      `https://api.github.com/users/${user}/repos?per_page=${this.repos_count}&sort=${this.repos_sort}`,
+      this.config
+    )
+ 
+    // concurrently fetch profile and repos
+    const responses = await Promise.all([profileResponse, repoResponse])
+ 
+    // check response was good
+    if (responses.every((res) => res.ok)) {
+      const [profile, repos] = await Promise.all(
+        responses.map((promise) => promise.json())
+      )
+      cachedUser = { profile, repos }
+    } else {
+      cachedUser.message = 'User Not Found'
+    }
+ 
+    return cachedUser
+  }
+} -->
